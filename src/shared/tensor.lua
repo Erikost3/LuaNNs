@@ -108,6 +108,7 @@ function Tensor:shape(shape, depth)
             local depthSize = shape[depth + 1]
             local currentSize = #self[i]
             assert(depthSize == currentSize, "Tensor.shape: shapes are not same at dimension depth(1), " .. 1 + depth .. ": " .. (depthSize or type(depthSize)) .. " ~= " .. (currentSize or type(currentSize)))
+            Tensor.shape(self[i], shape, depth + 1)
         end
     end
 
@@ -122,61 +123,69 @@ function Tensor:shape(shape, depth)
     end
 end
 
+-- Tensor deep copy (recursively)
+function Tensor:deepCopy()
+    local newSelf = {}
+    for i, v in pairs(self) do
+        if type(v) == "table" then
+            newSelf[i] = Tensor.deepCopy(v)
+        else
+            newSelf[i] = v
+        end
+    end
+    return newSelf
+end
+
+-- Tensor reindex
+function Tensor:reindex(...)
+
+    local indices = {...}
+    for i = 1, #indices do
+        assert(type(indices[i]) == "number", "Tensor.reindex: indices must be numbers")
+        
+        self = self[indices[i]]
+    end
+
+    return self
+end
+
+-- Tensor setReindex
+function Tensor:setReindex(value, ...)
+    local indices = {...}
+    local clone = table.clone(self)
+end
 
 -- Tensor einsum
 function Tensor.einsum(raw_notation, ...)
     
-    raw_notation = string.gsub(raw_notation, "%s", "")
-
-    local indices = {}
-
-    for i = 1, #raw_notation do
-        if string.match(raw_notation, "%a") then
-            table.insert(indices, {raw_notation:sub(i, i), 0})
-        end
-    end
-
     local notation = string.split(raw_notation, "->")
 
     local notationLeft = string.split(notation[1], ",")
     local notationRight = string.split(notation[2], ",")
 
-    local leftTensors = {...}
+    local tensors = {...}
 
-    for i = 1, notationLeft do
-        assert(type(leftTensors[i]) == "table", "Tensor.einsum: not enough tensors provided, got " .. #leftTensors .. " expected " .. i)
-        
-        local tensor = leftTensors[i]
-        local shape = Tensor.shape(tensor)
-        local note = string.split(notationLeft[i], "")
-        local shape_to_note = {}
+    -- Transpose case
+    if #notationLeft == 1 and #notationRight == 1 then
 
-        for i2, v2 in pairs(note) do
-            assert(shape_to_note[v2] == shape[i2], "Tensor.einsum: shape of tensor " .. i .. " is not same as notation, " .. v2 .. ": " .. shape[i2] .. " ~= " .. shape_to_note[v2])
-            shape_to_note[v2] = shape[i2]
+        -- Make sure notation contain same indices
+        for i = 1, #string.split(notationLeft[1], "") do
+            assert(string.find(notationRight[1], string.sub(notationLeft[1], i, i)), "Tensor.einsum: in notation tensors does not contain same indices")
         end
-        
-        assert(#shape == #notationLeft[i], "Tensor.einsum: not enough dimensions provided, got " .. #shape .. " expected " .. #notationLeft[i])
-    end
 
-    local rightTensors = {...}
+        -- Make sure notation are same shape
+        assert(#notationLeft[1] == #notationRight[1], "Tensor.einsum: in notation tensors are not same shape")
 
-    for i = 1, notationRight do
-        assert(type(rightTensors[i]) == "table", "Tensor.einsum: not enough tensors provided, got " .. #rightTensors .. " expected " .. i)
-        
-        local tensor = rightTensors[i]
-        local shape = Tensor.shape(tensor)
-        local note = string.split(notationRight[i], "")
-        local shape_to_note = {}
-
-        for i2, v2 in pairs(note) do
-            assert(shape_to_note[v2] == shape[i2], "Tensor.einsum: shape of tensor " .. i .. " is not same as notation, " .. v2 .. ": " .. shape[i2] .. " ~= " .. shape_to_note[v2])
-            shape_to_note[v2] = shape[i2]
+        local swapDims = {}
+        for i, v in pairs(string.split(notationLeft[1], "")) do
+            table.insert(swapDims, string.find(notationRight[1], v), i)
         end
-        
-        assert(#shape == #notationRight[i], "Tensor.einsum: not enough dimensions provided, got " .. #shape .. " expected " .. #notationRight[i])
-    end
 
+        
+        
+
+
+    end
 end
 
 return Tensor

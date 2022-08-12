@@ -203,6 +203,12 @@ end
 
 -- Test broken tensor shape
 function testTensor:testShapeInvalid()
+
+    local n = 1
+    self:assertError(function()
+        Tensor.shape(n)
+    end)
+
     local t = Tensor {
         {
             {4, 5, 6},
@@ -233,6 +239,187 @@ function testTensor:testShapeInvalid()
     self:assertError(function()
         self:assertEqualsTable(t2:shape(), {2, 3, 3})
     end)
+
+    local t3 = Tensor {
+        {
+            {2, 3},
+            {4, 5, 6},
+            {7, 9}
+        },
+        {
+            {1, 2, 3},
+            {4, 6},
+            {7, 8, 9}
+        }
+    }
+    self:assertError(function()
+        self:assertEqualsTable(t3:shape(), {2, 3, 3})
+    end)
+end
+
+-- Test tensor deep copy
+function testTensor:testDeepCopy()
+    local t = Tensor {1, 2, 3}
+    local t2 = t:deepCopy()
+    self:assertEqualsTable(t, t2)
+
+    t = Tensor {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}
+    }
+    t2 = t:deepCopy()
+
+    self:assertEqualsTable(t, t2)
+end
+
+-- Test tensor reindexing
+function testTensor:testReindex(...)
+    local t = Tensor {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}
+    }
+    self:assertEqualsTable(t:reindex(1), Tensor {1, 2, 3})
+    self:assertEqualsTable(t:reindex(2), Tensor {4, 5, 6})
+    self:assertEqualsTable(t:reindex(3), Tensor {7, 8, 9})
+    self:assertEquals(t:reindex(1, 1), 1)
+    self:assertEquals(t:reindex(1, 2), 2)
+    self:assertEquals(t:reindex(1, 3), 3)
+    self:assertEquals(t:reindex(2, 1), 4)
+    self:assertEquals(t:reindex(2, 2), 5)
+    self:assertEquals(t:reindex(2, 3), 6)
+    self:assertEquals(t:reindex(3, 1), 7)
+    self:assertEquals(t:reindex(3, 2), 8)
+    self:assertEquals(t:reindex(3, 3), 9)
+
+    local t2 = Tensor {
+        {
+            {1, 2, 3},
+            {4, 5, 6},
+            {7, 8, 9}
+        },
+        {
+            {1, 2, 3},
+            {4, 5, 6},
+            {7, 8, 9}
+        }
+    }
+    self:assertEquals(t2:reindex(1, 1, 1), 1)
+    self:assertEquals(t2:reindex(1, 1, 2), 2)
+    self:assertEquals(t2:reindex(1, 1, 3), 3)
+    self:assertEquals(t2:reindex(1, 2, 1), 4)
+    self:assertEquals(t2:reindex(1, 2, 2), 5)
+    self:assertEquals(t2:reindex(1, 2, 3), 6)
+    self:assertEquals(t2:reindex(1, 3, 1), 7)
+    self:assertEquals(t2:reindex(1, 3, 2), 8)
+    self:assertEquals(t2:reindex(1, 3, 3), 9)
+    self:assertEquals(t2:reindex(2, 1, 1), 1)
+    self:assertEquals(t2:reindex(2, 1, 2), 2)
+    self:assertEquals(t2:reindex(2, 1, 3), 3)
+    self:assertEquals(t2:reindex(2, 2, 1), 4)
+    self:assertEquals(t2:reindex(2, 2, 2), 5)
+    self:assertEquals(t2:reindex(2, 2, 3), 6)
+    self:assertEquals(t2:reindex(2, 3, 1), 7)
+    self:assertEquals(t2:reindex(2, 3, 2), 8)
+    self:assertEquals(t2:reindex(2, 3, 3), 9)
+
+end
+
+-- Test tensor reindexing invalid
+function testTensor:testReindexInvalid(...)
+    local t = Tensor {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}
+    }
+    self:assertError(function()
+        t:reindex(0, 1) -- because 0 is nil, can't recursivley index it with 1
+    end)
+end
+
+-- Test tensor setReindex
+function testTensor:testSetReindex(...)
+
+    local t = Tensor {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}
+    }
+    local t2 = t:setReindex({0, 0, 0}, 1)
+    self:assertEqualsTable(t, {
+        {0, 0, 0},
+        {4, 5, 6},
+        {7, 8, 9}
+    })
+    t2 = t:setReindex({0, 0, 0}, 2)
+    self:assertEqualsTable(t, {
+        {1, 2, 3},
+        {0, 0, 0},
+        {7, 8, 9}
+    })
+    t2 = t:setReindex({0, 0, 0}, 3)
+    self:assertEqualsTable(t, {
+        {1, 2, 3},
+        {4, 5, 6},
+        {0, 0, 0}
+    })
+
+    t2 = t:setReindex(2, 1, 1)
+    self:assertEqualsTable(t, {
+        {2, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}
+    })
+    t2 = t:setReindex(2, 1, 2)
+    self:assertEqualsTable(t, {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}
+    })
+    t2 = t:setReindex(2, 1, 3)
+    self:assertEqualsTable(t, {
+        {1, 2, 2},
+        {4, 5, 6},
+        {7, 8, 9}
+    })
+    t2 = t:setReindex(2, 2, 1)
+    self:assertEqualsTable(t, {
+        {1, 2, 3},
+        {2, 5, 6},
+        {7, 8, 9}
+    })
+    t2 = t:setReindex(2, 2, 2)
+    self:assertEqualsTable(t, {
+        {1, 2, 3},
+        {4, 2, 6},
+        {7, 8, 9}
+    })
+    t2 = t:setReindex(2, 2, 3)
+    self:assertEqualsTable(t, {
+        {1, 2, 3},
+        {4, 5, 2},
+        {7, 8, 9}
+    })
+    t2 = t:setReindex(2, 3, 1)
+    self:assertEqualsTable(t, {
+        {1, 2, 3},
+        {4, 5, 6},
+        {2, 8, 9}
+    })
+    t2 = t:setReindex(2, 3, 2)
+    self:assertEqualsTable(t, {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 2, 9}
+    })
+    t2 = t:setReindex(2, 3, 3)
+    self:assertEqualsTable(t, {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 2}
+    })
+
 end
 
 -- Test tensor einsum
@@ -320,8 +507,7 @@ function testTensor:testEinsum()
 
     -- Matrix trace
     out = Tensor.einsum("ii->", t)
-    self:assertEquals(out, {3, 3})
-    self:assertEqualsTable(out:shape(), {1})
+    self:assertEquals(out, 3)
 end
 
 -- Run tests
