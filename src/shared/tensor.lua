@@ -1,15 +1,59 @@
+--[[
+
+MIT License
+
+Copyright (c) 2022 Erikost3
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+]]
+
+
 local BaseClass = require(game:GetService("ReplicatedStorage").Common.class)
+
+-- Check if tables contents are the same
+local function recursiveEquals(_expected, _actual)
+        
+    if type(_expected) ~= type(_actual) then
+        return false
+    end
+    
+    if type(_expected) ~= "table" then
+        return _expected == _actual
+    end
+  
+    if #_expected ~= #_actual then
+        return false
+    end
+
+    for i = 1, #_expected do
+        if not recursiveEquals(_expected[i], _actual[i]) then
+            return false
+        end
+    end
+
+    return true
+end
 
 ------------------
 -- Tensor class --
 ------------------
-
---[[
-
-Description: Tensor class for tensor operations
-
-]]
-
 
 local Tensor = BaseClass:subclass{}
 
@@ -70,15 +114,12 @@ end
 
 -- __eq (check if two tensors have similar contents, recursively)
 function Tensor:__eq(other)
-    local equal = true
-    for i, v in pairs(self) do
-        if type(v) == "table" then
-            equal = equal and Tensor.__eq(v, other[i])
-        else
-            equal = equal and v == other[i]
-        end
+
+    if not other['is'] or type(other['is']) ~= "function" then
+        return false
     end
-    return equal
+
+    return recursiveEquals(self, other)
 end
 
 -- Tensor shape (recursively)

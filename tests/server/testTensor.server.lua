@@ -6,40 +6,52 @@ local Tensor = require(game:GetService("ReplicatedStorage").Common.tensor)
 local TestCase = require(game:GetService("ReplicatedStorage").Common.testCase)
 
 -- Tensor test case
-local testTensor = TestCase:subclass{}
-
-testTensor.name = "testTensor"
+local testTensor = TestCase:subclass{name = "testTensor"}
 
 -- Test tensor init
 function testTensor:testInit()
-    local t = Tensor(3, 3)
-    self:assertEqualsTable(t, {
-        {0, 0, 0},
-        {0, 0, 0},
-        {0, 0, 0}
-    })
 
-    local t2 = Tensor(3, 3, function(i, j)
+    -- VECTOR: 1
+    local v11 = Tensor(3)
+    local v12 = Tensor{0, 0, 0}
+    self:assertEquals(v11, v12)
+    self:assertEqualsTable(v11, v12)
+
+    -- VECTOR 2
+    local v21 = Tensor(3, function(i)
+        return i
+    end)
+    local v22 = Tensor{1, 2, 3}
+    self:assertEquals(v21, v22)
+    self:assertEqualsTable(v21, v22)
+
+    -- MATRIX: 1
+    local m11 = Tensor(3, 3)
+    local m12 = Tensor{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}
+    self:assertEquals(m11, m12)
+    self:assertEqualsTable(m11, m12)
+
+    -- MATRIX: 2
+    local m21 = Tensor(3, 3, function(i, j)
         return i and j and i + j
     end)
+    local m22 = Tensor{{2, 3, 4}, {3, 4, 5}, {4, 5, 6}}
+    self:assertEquals(m21, m22)
+    self:assertEqualsTable(m21, m22)
 
-    self:assertEqualsTable(t2, {
-        {2, 3, 4},
-        {3, 4, 5},
-        {4, 5, 6}
-    })
+    -- TENSOR: 1
+    local t11 = Tensor(3, 3, 3)
+    local t12 = Tensor{{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}, {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}, {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}}
+    self:assertEquals(t11, t12)
+    self:assertEqualsTable(t11, t12)
 
-    -- Test with already initialized tensor
-    local t3 = Tensor {
-        {1, 2, 3},
-        {4, 5, 6},
-        {7, 8, 9}
-    }
-    self:assertEqualsTable(t3, {
-        {1, 2, 3},
-        {4, 5, 6},
-        {7, 8, 9}
-    })
+    -- TENSOR: 2
+    local t21 = Tensor(3, 3, 3, function(i, j, k)
+        return i and j and k and i + j + k
+    end)
+    local t22 = Tensor{{{3, 4, 5}, {4, 5, 6}, {5, 6, 7}}, {{4, 5, 6}, {5, 6, 7}, {6, 7, 8}}, {{5, 6, 7}, {6, 7, 8}, {7, 8, 9}}}
+    self:assertEquals(t21, t22)
+    self:assertEqualsTable(t21, t22)
 end
 
 -- Test tensor indexing
@@ -84,62 +96,80 @@ end
 -- Test tensor equality
 function testTensor:testEquality()
 
-    local t = Tensor {1, 2, 3}
-    self:assertEquals(t, t)
+    -- VECTOR: 1
+    local v1 = Tensor {1}
+    self:assertEquals(v1, v1)
 
-    local t2 = Tensor {
-        {1, 2, 3},
-        {4, 5, 6},
-        {7, 8, 9}
-    }
-    self:assertEquals(t2, t2)
+    -- VECTOR: 2
+    local v2 = Tensor {1, 2, 3}
+    self:assertEquals(v2, v2)
 
-    local t3 = Tensor {
-        {
-            { 1, 2, 3 },
-            { 4, 5, 6 },
-            { 7, 8, 9 }
-        }
-    }
-    self:assertEquals(t3, t3)
+    -- MATRIX: 1
+    local m1 = Tensor {{1}}
+    self:assertEquals(m1, m1)
+
+    -- MATRIX: 2
+    local m2 = Tensor {{1}, {1}}
+    self:assertEquals(m2, m2)
+
+    -- TENSOR: 1
+    local t1 = Tensor {{{1}}}
+    self:assertEquals(t1, t1)
+
+     -- TENSOR: 2
+     local t2 = Tensor {{{1}}, {{1}}}
+     self:assertEquals(t2, t2)
 end
 
 -- Test tensor inequality
 function testTensor:testInequality()
 
-    local t = Tensor {1, 2, 3}
-    self:assertNotEquals(t, {1, 2, 0})
+    -- ARRAY
+    self:assertFalse(Tensor{1} == {1})
 
-    local t2 = Tensor {
-        {1, 2, 3},
-        {4, 5, 6},
-        {7, 8, 9}
-    }
-    self:assertNotEquals(t2, {
-        {1, 2, 3},
-        {4, 5, 6},
-        {7, 8, 0}
-    })
+    -- VECTOR: 1
+    local v11 = Tensor {1}
+    local v12 = Tensor {2}
+    self:assertNotEquals(v11, v12)
 
-    local t3 = Tensor {
-        {
-            { 1, 2, 3 },
-            { 4, 5, 6 },
-            { 7, 8, 9 }
-        }
-    }
-    self:assertNotEquals(t3, {
-        {
-            { 1, 2, 3 },
-            { 4, 5, 6 },
-            { 7, 8, 0 }
-        }
-    })
+    -- VECTOR: 2
+    local v21 = Tensor {1, 2, 3}
+    local v22 = Tensor {1, 2, 4}
+    self:assertNotEquals(v21, v22)
+
+    -- MATRIX: 1
+    local m11 = Tensor {{1}}
+    local m12 = Tensor {{2}}
+    self:assertNotEquals(m11, m12)
+
+    -- MATRIX: 2
+    local m21 = Tensor {{1}, {1}}
+    local m22 = Tensor {{1}, {2}}
+    self:assertNotEquals(m21, m22)
+
+    -- TENSOR: 1
+    local t11 = Tensor {{{1}}}
+    local t12 = Tensor {{{2}}}
+    self:assertNotEquals(t11, t12)
+
+     -- TENSOR: 2
+     local t21 = Tensor {{{1}}, {{1}}}
+     local t22 = Tensor {{{1}}, {{2}}}
+     self:assertNotEquals(t21, t22)
 end
 
 -- Test tensor shape
 function testTensor:testShape()
-    
+
+    -- VECTOR: 1
+    self:assertEqualsTable(Tensor{1}:shape(), {1})
+
+    -- VECTOR: 2
+    self:assertEqualsTable(Tensor{1, 2}:shape(), {2})
+
+    -- MATRIX: 1
+    self:assertEqualsTable(Tensor{}:shape(), {2})
+
     local t = Tensor {1, 2, 3}
     self:assertEqualsTable(t:shape(), 3)
 
@@ -316,7 +346,6 @@ function testTensor:testReindex(...)
     self:assertEquals(t2:reindex(2, 3, 1), 7)
     self:assertEquals(t2:reindex(2, 3, 2), 8)
     self:assertEquals(t2:reindex(2, 3, 3), 9)
-
 end
 
 -- Test tensor reindexing invalid
