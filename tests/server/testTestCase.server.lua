@@ -2,12 +2,6 @@
 -- Test class --
 ----------------
 
---[[
-
-Location: ReplicatedStorage.Common.test
-
-]]
-
 local TestCase = require(game:GetService("ReplicatedStorage").Common.testCase)
 
 local testTestCase = TestCase:subclass{}
@@ -17,14 +11,34 @@ testTestCase.name = "testTestCase"
 -- Test prettyTable
 function testTestCase.testPrettyTable(self)
 
+    -- NUMBER: 1
     local tbl = 1
     local str = TestCase.prettyTable(tbl)
     self:assertEquals(str, "1")
 
+    -- VECTOR: 1
     tbl = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
     str = TestCase.prettyTable(tbl)
     self:assertEquals("{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}", str)
+    
+    -- viewIndex is true
+    str = TestCase.prettyTable(tbl, true)
+    self:assertEquals("{1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10}", str)
 
+
+    -- MATRIX: 1
+    local tbl2d = {
+        {1, 2, 3}
+    }
+
+    local str2d = TestCase.prettyTable(tbl2d)
+    self:assertEquals("{{1, 2, 3}}", str2d)
+
+    -- viewIndex is true
+    str2d = TestCase.prettyTable(tbl2d, true)
+    self:assertEquals("{1:{1:1, 2:2, 3:3}}", str2d)
+
+    -- MATRIX: 2
     local tbl2d = {
         {1, 2, 3},
         {4, 5, 6},
@@ -35,20 +49,24 @@ function testTestCase.testPrettyTable(self)
     local str2d = TestCase.prettyTable(tbl2d)
     self:assertEquals("{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}}", str2d)
 
-    -- with viewIndex
-    str = TestCase.prettyTable(tbl, true)
-    self:assertEquals("{1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10}", str)
-
+    -- viewIndex is true
     str2d = TestCase.prettyTable(tbl2d, true)
     self:assertEquals("{1:{1:1, 2:2, 3:3}, 2:{1:4, 2:5, 3:6}, 3:{1:7, 2:8, 3:9}, 4:{1:10, 2:11, 3:12}}", str2d)
 
-    -- with filter
-    str = TestCase.prettyTable(tbl, nil, function(k, v) return k % 2 == 0 end)
-    self:assertEquals("{2, 4, 6, 8, 10}", str)
+    -- TENSOR: 1
+    local tbl2d = {{
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9},
+        {10, 11, 12}
+    }}
 
-    str2d = TestCase.prettyTable(tbl2d, nil, function(k, v) return k % 2 == 0 end)
-    self:assertEquals("{{5}, {11}}", str2d)
+    local str2d = TestCase.prettyTable(tbl2d)
+    self:assertEquals("{{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}}}", str2d)
 
+    -- viewIndex is true
+    str2d = TestCase.prettyTable(tbl2d, true)
+    self:assertEquals("{1:{1:{1:1, 2:2, 3:3}, 2:{1:4, 2:5, 3:6}, 3:{1:7, 2:8, 3:9}, 4:{1:10, 2:11, 3:12}}}", str2d)
 end
 
 -- Test assertTrue

@@ -23,8 +23,8 @@
         "Client": {
           "$path": "src/client"
         },
-        "ClientTest": {
-          "$path": "tests/client"
+        "ServerTest": {
+          "$path": "tests/server"
         }
       }
     },

@@ -2,12 +2,6 @@
 -- Test class --
 ----------------
 
---[[
-
-Location: ReplicatedStorage.Common.class
-
-]]
-
 local BaseClass = require(game:GetService("ReplicatedStorage").Common.class)
 
 -- Test subclassing

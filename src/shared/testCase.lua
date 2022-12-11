@@ -7,7 +7,7 @@ local BaseClass = require(game:GetService("ReplicatedStorage").Common.class)
 local TestCase = BaseClass:subclass{}
 
 -- Pretty table
-function TestCase.prettyTable(self, viewIndex, filter)
+function TestCase.prettyTable(self, viewIndex)
 
     if type(self) == "number" then
         return tostring(self)
@@ -16,23 +16,18 @@ function TestCase.prettyTable(self, viewIndex, filter)
     assert(type(self) == "table", "TestCase.prettyTable: self is not a table")
 
     local str = "{"
-    filter = filter or function(k, v) return true end
-
     for i, v in pairs(self) do
-        if filter(i, v) then
 
-            str = str .. (viewIndex and i .. ":" or "")
+        str = str .. (viewIndex and i .. ":" or "")
 
-            if type(v) == "table" then
-                str = str .. TestCase.prettyTable(v, viewIndex, filter)
-            else
-                str = str .. tostring(v)
-            end
-
-            str = str .. ", "
+        if type(v) == "table" then
+            str = str .. TestCase.prettyTable(v, viewIndex)
+        else
+            str = str .. tostring(v)
         end
-    end
 
+        str = str .. ", "
+    end
     str = str:sub(1, string.len(str) - 2) .. "}"
 
     return str

@@ -2,12 +2,6 @@
 -- Class System --
 ------------------
 
---[[
-
-Description: Base class system
-
-]]
-
 local function construct(class, ...)
 
     local args = {...}

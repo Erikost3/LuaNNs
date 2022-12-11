@@ -2,13 +2,6 @@
 -- Test class --
 ----------------
 
---[[
-
-Location: ReplicatedStorage.Common.tensor
-TestCase: ReplicatedStorage.Common.testCase
-
-]]
-
 local Tensor = require(game:GetService("ReplicatedStorage").Common.tensor)
 local TestCase = require(game:GetService("ReplicatedStorage").Common.testCase)
 
