@@ -39,7 +39,6 @@ end
 
 instance = SubClass()
 
--- Make sure the initializer inheritance overrides with initilizer
 assert(
     instance.test == "test",
     "Class: instance.test is not 'test'"
