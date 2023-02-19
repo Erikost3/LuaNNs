@@ -123,45 +123,38 @@ function Tensor:__eq(other)
 end
 
 -- Tensor shape (recursively)
-function Tensor:shape(shape, depth)
+function Tensor:shape()
 
     for i = 1, #self do
         -- Make sure types are same
-        assert(type(self[1]) == type(self[i]), "Tensor.shape: types are not same, 1: " .. type(self[1]) .. " ~= " .. i .. ": " .. type(self[i]))
+        assert(type(self[1]) == type(self[i]), "Tensor.shape: types are not same " .. type(self[1]) .. " ~= " .. type(self[i]))
     end
 
-    -- Vector case
-    if type(self[1]) == "number" then
-        return #self
-    end
+    local shape = {}
 
-    shape = shape or {}
-    depth = depth or 1
+    local function recursiveShape(_self, _depth)
+        _depth = _depth or 1
 
-    -- Tensors case
-    shape[depth] = #self
-
-    for i = 1, #self do
-        if not shape[1 + depth] then
-            shape[depth + 1] = Tensor.shape(self[i], shape, depth + 1)
-        else
-            -- Make sure shapes are same
-            local depthSize = shape[depth + 1]
-            local currentSize = #self[i]
-            assert(depthSize == currentSize, "Tensor.shape: shapes are not same at dimension depth(1), " .. 1 + depth .. ": " .. (depthSize or type(depthSize)) .. " ~= " .. (currentSize or type(currentSize)))
-            Tensor.shape(self[i], shape, depth + 1)
+        for i = 1, #_self do
+            assert(type(_self[1]) == type(_self[i]), "Tensor.shape: broken tensor with mixed value types")
         end
+
+        if type(_self[1]) == "table" then
+            for i = 1, #_self do
+                recursiveShape(_self[i], _depth + 1)
+            end
+        end
+
+        if not shape[_depth] then
+            shape[_depth] = #_self
+        end
+
+        assert(#_self == shape[_depth], "Tensor.shape: broken tensor shape")
     end
 
-    if depth > 1 then
-        -- Make sure shapes are same
-        local depthSize = shape[depth]
-        local currentSize = #self
-        assert(depthSize == currentSize, "Tensor.shape: shapes are not same at dimension depth(2), " .. depth .. ": " .. (depthSize or type(depthSize)) .. " ~= " .. (currentSize or type(currentSize)))
-        return #self
-    else
-        return shape
-    end
+    recursiveShape(self)
+
+    return shape
 end
 
 -- Tensor deep copy (recursively)
@@ -194,6 +187,7 @@ end
 function Tensor:setReindex(value, ...)
     local indices = {...}
     local clone = table.clone(self)
+
 end
 
 -- Tensor einsum

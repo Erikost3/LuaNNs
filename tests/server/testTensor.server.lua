@@ -162,17 +162,11 @@ end
 function testTensor:testShape()
 
     -- VECTOR: 1
-    self:assertEqualsTable(Tensor{1}:shape(), {1})
+    local t = Tensor {1, 2, 3}
+    self:assertEqualsTable(t:shape(), {3})
 
-    -- VECTOR: 2
-    self:assertEqualsTable(Tensor{1, 2}:shape(), {2})
 
     -- MATRIX: 1
-    self:assertEqualsTable(Tensor{}:shape(), {2})
-
-    local t = Tensor {1, 2, 3}
-    self:assertEqualsTable(t:shape(), 3)
-
     local t2 = Tensor {
         {1, 2, 3},
         {4, 5, 6},
@@ -192,8 +186,8 @@ function testTensor:testShape()
             {7, 8, 9}
         }
     }
-    local shape = t3:shape()
-    self:assertEqualsTable(shape, {2, 3, 3})
+
+    self:assertEqualsTable(t3:shape(), {2, 3, 3})
 
     local t4 = Tensor {
         {
