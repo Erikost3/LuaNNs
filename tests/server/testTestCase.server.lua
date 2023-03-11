@@ -1,8 +1,8 @@
-----------------
--- Test class --
-----------------
+------------------
+-- TestTestCase --
+------------------
 
-local TestCase = require(game:GetService("ReplicatedStorage").Common.testCase)
+local TestCase = require(game:GetService("ReplicatedStorage").LuaNNs.testCase)
 
 local testTestCase = TestCase:subclass{name = "testTestCase"}
 

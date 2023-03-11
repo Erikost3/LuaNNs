@@ -1,4 +1,4 @@
-local BaseClass = require(game:GetService("ReplicatedStorage").Common.class)
+local BaseClass = require(game:GetService("ReplicatedStorage").LuaNNs.class)
 
 -- Check if tables contents are the same
 local function recursiveEquals(_expected, _actual)

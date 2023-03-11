@@ -2,7 +2,7 @@
 -- Test class --
 ----------------
 
-local BaseClass = require(game:GetService("ReplicatedStorage").Common.class)
+local BaseClass = require(game:GetService("ReplicatedStorage").LuaNNs.class)
 
 -- Test subclassing
 local SubClass = BaseClass:subclass{}

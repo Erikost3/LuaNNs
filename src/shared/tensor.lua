@@ -25,7 +25,7 @@ SOFTWARE.
 ]]
 
 
-local BaseClass = require(game:GetService("ReplicatedStorage").Common.class)
+local BaseClass = require(game:GetService("ReplicatedStorage").LuaNNs.class)
 
 -- Check if tables contents are the same
 local function recursiveEquals(_expected, _actual)
@@ -57,6 +57,39 @@ end
 
 local Tensor = BaseClass:subclass{}
 
+-- Tensor recurse
+function Tensor:recurse(...)
+    local args = {...}
+
+    local fReturnTensor
+
+    local function recurseiveRecurse(_self, indexList)
+        indexList = indexList and Tensor.deepCopy(indexList) or {}
+        local depth = #indexList+1
+        for i = 1, #_self do
+            indexList[depth] = i
+
+            if type(_self[i]) == "table" then
+                indexList[depth] = i
+                recurseiveRecurse(_self[i], indexList)
+            else
+                for j = 1, #args do
+                    if type(args[j]) == "function" then
+                        local rt = args[j](fReturnTensor or self, unpack(indexList))
+                        fReturnTensor = rt
+                    end
+                end
+            end
+        end
+    end
+
+    assert(fReturnTensor == nil or pcall(function() Tensor.shape(fReturnTensor) end), "Tensor.recurse: Tensor returned by function(s) were broken")
+
+    recurseiveRecurse(self)
+
+    return fReturnTensor or self
+end
+
 -- Init
 function Tensor:init(...)
     
@@ -77,21 +110,21 @@ function Tensor:init(...)
     end
 
     local function recursiveConstruct(_shape, ...)
-        local indices = {...}
+        local indcies = {...}
         local scope = {}
         
         for i = 1, shape[#shape] do
-            if #_shape - #indices == 1 then
-                table.insert(indices, i)
+            if #_shape - #indcies == 1 then
+                table.insert(indcies, i)
                 for j = 1, #funcs do
-                    scope[i] = funcs[j](unpack(indices))
+                    scope[i] = funcs[j](table.unpack(indcies))
                     assert(scope[i] ~= nil, "Tensor.init: function returned nil")
                 end
-                table.remove(indices)
+                table.remove(indcies)
             else
-                table.insert(indices, i)
-                table.insert(scope, recursiveConstruct(_shape, unpack(indices)))
-                table.remove(indices)
+                table.insert(indcies, i)
+                table.insert(scope, recursiveConstruct(_shape, table.unpack(indcies)))
+                table.remove(indcies)
             end
         end
 
@@ -170,24 +203,111 @@ function Tensor:deepCopy()
     return newSelf
 end
 
--- Tensor reindex
+-- Tensor reindex (recursive indexing)
 function Tensor:reindex(...)
+    local indcies = {...}
 
-    local indices = {...}
-    for i = 1, #indices do
-        assert(type(indices[i]) == "number", "Tensor.reindex: indices must be numbers")
-        
-        self = self[indices[i]]
+    if type(indcies[1]) == "table" then
+        indcies = indcies[1]
+    end
+
+    for i = 1, #indcies do
+        assert(type(indcies[i]) == "number", "Tensor.reindex: indcies must be numbers")
+        self = self[indcies[i]]
     end
 
     return self
 end
 
--- Tensor setReindex
+-- Tensor setReindex (set index recursively)
 function Tensor:setReindex(value, ...)
-    local indices = {...}
-    local clone = table.clone(self)
+    local indcies = {...}
 
+    if type(indcies[1]) == "table" then
+        indcies = indcies[1]
+    end
+
+    local clone = Tensor.deepCopy(self)
+    local newSelf = clone
+	
+	for i = 1, #indcies - 1 do
+        if newSelf[indcies[i]] == nil then
+            newSelf[indcies[i]] = {}
+        end
+		newSelf = newSelf[indcies[i]]
+	end
+	
+	newSelf[indcies[#indcies]] = value
+	
+	return clone
+end
+
+-- Tensor transpose
+function Tensor:transpose(...)
+    
+    local shape = Tensor.shape(self)
+    local indicies = {...}
+
+    if #indicies == 0 then
+        if #shape == 1 then
+            table.insert(indicies, 1)
+        else
+            for i = 1, #shape do
+                if i == #shape-1 then
+                    table.insert(indicies, #shape)
+                elseif i == #shape then
+                    table.insert(indicies, #shape-1)
+                else
+                    table.insert(i)
+                end
+            end
+        end
+    end
+
+    assert(#indicies == #shape, "Tensor.transpose: the amount of indicies doesn't match the shape of the tensor")
+
+    if #shape == 1 then
+        return Tensor(self:deepCopy())
+    end
+
+    local newSelf = {}
+
+    local function recursiveTranspose(indexList)
+        indexList = indexList and Tensor.deepCopy(indexList) or {}
+        local depth = #indexList+1
+        if depth == #shape then
+            for i = 1, shape[depth] do
+                indexList[depth] = i
+                local setReindexIndicies = {}
+                for j = 1, #indicies do
+                    setReindexIndicies[j] = indexList[indicies[j]]
+                end
+                newSelf = Tensor.setReindex(newSelf, self:reindex(indexList), setReindexIndicies)
+            end
+        elseif shape[depth] and type(Tensor.reindex(self, shape[depth])) == "table" then
+            for i = 1, shape[depth] do
+                indexList[depth] = i
+                recursiveTranspose(indexList)
+            end
+        else
+            error("LuaNNs.Transpose: broken tensor")
+        end
+    end
+    
+    local function recursiveRecurse(t, ...)
+        local indexList = {...}
+        local depth = #indexList
+        for i = 1, shape[depth] do
+            indexList[depth] = i
+            local setReindexIndicies = {}
+            for j = 1, #indicies do
+                setReindexIndicies[j] = indexList[indicies[j]]
+            end
+            t = Tensor.setReindex(t, Tensor.reindex(t, indexList), setReindexIndicies)
+        end
+    end
+
+    return self:recurse(recursiveRecurse)
 end
 
 -- Tensor einsum
@@ -203,9 +323,9 @@ function Tensor.einsum(raw_notation, ...)
     -- Transpose case
     if #notationLeft == 1 and #notationRight == 1 then
 
-        -- Make sure notation contain same indices
+        -- Make sure notation contain same indcies
         for i = 1, #string.split(notationLeft[1], "") do
-            assert(string.find(notationRight[1], string.sub(notationLeft[1], i, i)), "Tensor.einsum: in notation tensors does not contain same indices")
+            assert(string.find(notationRight[1], string.sub(notationLeft[1], i, i)), "Tensor.einsum: in notation tensors does not contain same indcies")
         end
 
         -- Make sure notation are same shape
