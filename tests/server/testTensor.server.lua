@@ -814,8 +814,68 @@ function testTensor:testSetReindex(...)
     })
 end
 
--- test tensor transpose
-function testTensor:testTranspose()
+-- Test tensor flatten
+function testTensor:testFlatten(...)
+
+    -- VECTOR: 1
+    local v = Tensor{1}
+    self:assertEqualsTable(v:flatten(), v)
+
+    -- MATRIX: 1
+    local m = Tensor{{1, 2, 3, 4, 5, 6}}
+    self:assertEqualsTable(m:flatten(), Tensor{1, 2, 3, 4, 5, 6})
+
+    -- MATRIX: 2
+    local m2 = Tensor{{1, 10, 17}, {8, 5, 2}}
+    self:assertEqualsTable(m2:flatten(), Tensor{1, 10, 17, 8, 5, 2})
+
+    -- TENSOR: 1
+    local t = Tensor{{{1, 2, 3}, {9, 8, 7}}, {{6, 7, 8}, {6, 5, 4}}}
+    self:assertEqualsTable(t:flatten(), Tensor{1, 2, 3, 9, 8, 7, 6, 7, 8, 6, 5, 4})
+
+end
+
+-- Test tensor reshape
+function testTensor:testReshape(...)
+
+    -- VECTOR: 1
+    local v = Tensor{1}
+    self:assertEqualsTable(v:reshape(1), v)
+
+    -- MATRIX: 1
+    local m = Tensor{{1, 1}}
+    self:assertEqualsTable(m:reshape(2, 1), Tensor{{1}, {1}})
+    self:assertEqualsTable(m:reshape(1, 2), Tensor{{1, 1}})
+
+    -- MATRIX: 2
+    local m2 = Tensor{{1, 1}, {2, 2}}
+    self:assertEqualsTable(m2:reshape(2, 2), m2)
+    self:assertEqualsTable(m2:reshape(2, 2, 1), Tensor{{{1}, {1}}, {{2}, {2}}})
+    self:assertEqualsTable(m2:reshape(2, 1, 2), Tensor{{{1, 1}}, {{2, 2}}})
+    self:assertEqualsTable(m2:reshape(1, 2, 2), Tensor{{{1, 1}, {2, 2}}})
+    self:assertEqualsTable(m2:reshape(4), Tensor{1, 1, 2, 2})
+    self:assertEqualsTable(m2:reshape(1, 4), Tensor{{1, 1, 2, 2}})
+    self:assertEqualsTable(m2:reshape(4, 1), Tensor{{1}, {1}, {2}, {2}})
+    self:assertEqualsTable(m2:reshape(1, 1, 4), Tensor{{{1, 1, 2, 2}}})
+    self:assertEqualsTable(m2:reshape(1, 4, 1), Tensor{{{1}, {1}, {2}, {2}}})
+    self:assertEqualsTable(m2:reshape(4, 1, 1), Tensor{{{1}}, {{1}}, {{2}}, {{2}}})
+
+    -- TENSOR: 1
+    local t = Tensor{{{1, 1, 2, 2}}, {{3, 3, 4, 4}}}
+    self:assertEqualsTable(t:reshape(8), Tensor{1, 1, 2, 2, 3, 3, 4, 4})
+    self:assertEqualsTable(t:reshape(1, 8), Tensor{{1, 1, 2, 2, 3, 3, 4, 4}})
+    self:assertEqualsTable(t:reshape(8, 1), Tensor{{1}, {1}, {2}, {2}, {3}, {3}, {4}, {4}})
+    self:assertEqualsTable(t:reshape(1, 1, 8), Tensor{{{1, 1, 2, 2, 3, 3, 4, 4}}})
+    self:assertEqualsTable(t:reshape(1, 8, 1), Tensor{{{1}, {1}, {2}, {2}, {3}, {3}, {4}, {4}}})
+    self:assertEqualsTable(t:reshape(8, 1, 1), Tensor{{{1}}, {{1}}, {{2}}, {{2}}, {{3}}, {{3}}, {{4}}, {{4}}})
+    self:assertEqualsTable(t:reshape(4, 2), Tensor{{1, 1}, {2, 2}, {3, 3}, {4, 4}})
+    self:assertEqualsTable(t:reshape(2, 4), Tensor{{1, 1, 2, 2}, {3, 3, 4, 4}})
+    self:assertEqualsTable(t:reshape(2, 2, 2), Tensor{{{1, 1}, {2, 2}}, {{3, 3}, {4, 4}}})
+
+end
+
+-- Test tensor transpose
+function testTensor:testTranspose(...)
     -- VECTOR: 1
     local v = Tensor {1}
     self:assertEqualsTable(v:transpose(), {1})
@@ -850,8 +910,21 @@ function testTensor:testTranspose()
     self:assertEqualsTable(t:transpose(3, 2, 1), Tensor{{{1}}, {{2}}, {{3}}})
 end
 
+-- Test tensor dot product
+function testTensor:testTensordot(...)
+
+    -- NUMBER: 1
+    self:assertEquals(Tensor.Tensordot(1, 1, 1), 1)
+
+    -- VECTOR: 1
+    self:assertEqualsTable(Tensor.Tensordot({1}, {1}, 2), {1})
+
+    -- VECTOR: 2
+    self:assertEqualsTable(Tensor.Tensordot({1, 2}, {1, 2}, 2))
+end
+
 -- Test tensor einsum
-function testTensor:testEinsum()
+function testTensor:testEinsum(...)
     
     local t = Tensor(2, 3, function()
         return 1

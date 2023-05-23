@@ -70,7 +70,6 @@ function Tensor:recurse(...)
             indexList[depth] = i
 
             if type(_self[i]) == "table" then
-                indexList[depth] = i
                 recurseiveRecurse(_self[i], indexList)
             else
                 for j = 1, #args do
@@ -190,7 +189,7 @@ function Tensor:shape()
     return shape
 end
 
--- Tensor deep copy (recursively)
+-- Tensor deep copy
 function Tensor:deepCopy()
     local newSelf = {}
     for i, v in pairs(self) do
@@ -219,7 +218,7 @@ function Tensor:reindex(...)
     return self
 end
 
--- Tensor setReindex (set index recursively)
+-- Tensor setReindex (recursively set index)
 function Tensor:setReindex(value, ...)
     local indcies = {...}
 
@@ -241,6 +240,88 @@ function Tensor:setReindex(value, ...)
 	
 	return clone
 end
+
+-- Tensor flatten
+function Tensor:flatten(...)
+    local result = {}
+    local function recursiveFlatten(v)
+        if type(v) == "table" then
+            for i = 1, #v do
+                recursiveFlatten(v[i])
+            end
+        else
+            table.insert(result, v)
+        end
+    end
+    recursiveFlatten(self)
+    return result
+end
+
+-- Tensor reshape
+function Tensor:reshape(...)
+
+    local newShape = {...}
+
+    assert(#newShape > 0,
+        "Tensor.reshape: New shape must be set"
+    )
+
+    local flat = Tensor.flatten(self)
+
+    local product = 1
+    for i = 1, #newShape do
+        product *= newShape[i]
+    end
+
+    assert(
+        product == #flat, 
+        "Tensor.reshape: New shape must be compatible with existing, flattened: '"..
+        tostring(#flat)..
+        "', new shape: '"..
+        tostring(product)..
+        "'"
+    )
+
+    local allnums = true
+    for i = 1, #self do
+        allnums = allnums and type(self[i]) == "number"
+    end
+
+    assert(
+        not allnums or allnums and #newShape == 1 and newShape[1] == #self,
+        "Tensor.reshape: tried to reshape vector with incompatible shape, flattened: '"..
+        tostring(#flat)..
+        "', new shape: '"..
+        tostring(newShape[1])..
+        "'"
+    )
+
+    if allnums then
+        return self
+    end
+
+    local function recursiveReshape(v, depth)
+        depth = depth or 1
+        if depth == #newShape then
+            for i = 1, newShape[depth] do
+                table.insert(v, flat[1])
+                table.remove(flat, 1)
+            end
+        else
+            for i = 1, newShape[depth] do
+                v[i] = v[i] or {}
+                recursiveReshape(v[i], depth + 1)
+            end
+        end
+    end
+
+    local result = {}
+
+    recursiveReshape(result)
+
+    return result
+end
+
 
 -- Tensor transpose
 function Tensor:transpose(...)
@@ -296,15 +377,12 @@ function Tensor:transpose(...)
     
     local function recursiveRecurse(t, ...)
         local indexList = {...}
-        local depth = #indexList
-        for i = 1, shape[depth] do
-            indexList[depth] = i
-            local setReindexIndicies = {}
-            for j = 1, #indicies do
-                setReindexIndicies[j] = indexList[indicies[j]]
-            end
-            t = Tensor.setReindex(t, Tensor.reindex(t, indexList), setReindexIndicies)
+        local getReindexIndicies = {}
+        for j = 1, shape[#indicies] do
+            getReindexIndicies[j] = indexList[indicies[j]]
         end
+        newSelf = Tensor.setReindex(newSelf, self:reindex(indexList), getReindexIndicies)
+        return newSelf
     end
 
     return self:recurse(recursiveRecurse)
@@ -335,12 +413,8 @@ function Tensor.einsum(raw_notation, ...)
         for i, v in pairs(string.split(notationLeft[1], "")) do
             table.insert(swapDims, string.find(notationRight[1], v), i)
         end
-
-        
-        
-
-
     end
+    
 end
 
 return Tensor
