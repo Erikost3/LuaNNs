@@ -108,26 +108,24 @@ function Tensor:init(...)
         end
     end
 
-    local function recursiveConstruct(_shape, ...)
-        local indcies = {...}
-        local scope = {}
+    local newSelf
+    local function recursiveConstruct(pastIndicies)
         
-        for i = 1, shape[#shape] do
-            if #_shape - #indcies == 1 then
-                table.insert(indcies, i)
-                for j = 1, #funcs do
-                    scope[i] = funcs[j](table.unpack(indcies))
-                    assert(scope[i] ~= nil, "Tensor.init: function returned nil")
-                end
-                table.remove(indcies)
+
+
+        for i = 1, shape[pastIndicies and #pastIndicies > 0 and #pastIndicies+1 or 1] do
+            local indicies = pastIndicies and table.clone(pastIndicies) or {}
+            indicies[#indicies+1] = i
+
+            if #indicies < #shape then
+                newSelf = Tensor.setReindex(newSelf, Tensor.reindex(self, indicies) or {}, indicies)
+                recursiveConstruct(indicies)
             else
-                table.insert(indcies, i)
-                table.insert(scope, recursiveConstruct(_shape, table.unpack(indcies)))
-                table.remove(indcies)
+                for j = 1, #funcs do
+                    newSelf = Tensor.setReindex(newSelf, funcs[j](unpack(indicies)), indicies)
+                end
             end
         end
-
-        return scope
     end
 
     if #shape > 0 then
@@ -136,9 +134,9 @@ function Tensor:init(...)
                 return 0
             end)
         end
-
-        local newSelf = recursiveConstruct(shape)
-        for i, v in pairs(newSelf) do
+        newSelf = {}
+        recursiveConstruct()
+        for i, v in newSelf do
             self[i] = v
         end
     end
@@ -190,8 +188,8 @@ function Tensor:shape()
 end
 
 -- Tensor deep copy
-function Tensor:deepCopy()
-    local newSelf = {}
+function Tensor:deepCopy(newSelf)
+    newSelf = newSelf or {}
     for i, v in pairs(self) do
         if type(v) == "table" then
             newSelf[i] = Tensor.deepCopy(v)
@@ -202,7 +200,7 @@ function Tensor:deepCopy()
     return newSelf
 end
 
--- Tensor reindex (recursive indexing)
+-- Tensor reindex (repeated indexing)
 function Tensor:reindex(...)
     local indcies = {...}
 
@@ -210,15 +208,18 @@ function Tensor:reindex(...)
         indcies = indcies[1]
     end
 
+    local result = self
+
     for i = 1, #indcies do
         assert(type(indcies[i]) == "number", "Tensor.reindex: indcies must be numbers")
-        self = self[indcies[i]]
+        result = result[indcies[i]]
+        if type(result) ~= "table" then break end
     end
 
-    return self
+    return result
 end
 
--- Tensor setReindex (recursively set index)
+-- Tensor setReindex (repeated set index)
 function Tensor:setReindex(value, ...)
     local indcies = {...}
 
@@ -321,7 +322,6 @@ function Tensor:reshape(...)
 
     return result
 end
-
 
 -- Tensor transpose
 function Tensor:transpose(...)

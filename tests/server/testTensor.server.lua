@@ -14,7 +14,6 @@ function testTensor:testInit()
     -- VECTOR: 1
     local v11 = Tensor(3)
     local v12 = Tensor{0, 0, 0}
-    self:assertEquals(v11, v12)
     self:assertEqualsTable(v11, v12)
 
     -- VECTOR 2
@@ -22,13 +21,11 @@ function testTensor:testInit()
         return i
     end)
     local v22 = Tensor{1, 2, 3}
-    self:assertEquals(v21, v22)
     self:assertEqualsTable(v21, v22)
 
     -- MATRIX: 1
     local m11 = Tensor(3, 3)
     local m12 = Tensor{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}
-    self:assertEquals(m11, m12)
     self:assertEqualsTable(m11, m12)
 
     -- MATRIX: 2
@@ -36,13 +33,21 @@ function testTensor:testInit()
         return i and j and i + j
     end)
     local m22 = Tensor{{2, 3, 4}, {3, 4, 5}, {4, 5, 6}}
-    self:assertEquals(m21, m22)
     self:assertEqualsTable(m21, m22)
+
+    -- MATRIX: 3
+    local m31 = Tensor(1, 2)
+    local m32 = Tensor{{0, 0}}
+    self:assertEqualsTable(m31, m32)
+
+    -- MATRIX: 4
+    local m41 = Tensor(2, 1)
+    local m42 = Tensor{{0}, {0}}
+    self:assertEqualsTable(m41, m42)
 
     -- TENSOR: 1
     local t11 = Tensor(3, 3, 3)
     local t12 = Tensor{{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}, {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}, {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}}
-    self:assertEquals(t11, t12)
     self:assertEqualsTable(t11, t12)
 
     -- TENSOR: 2
@@ -50,7 +55,6 @@ function testTensor:testInit()
         return i and j and k and i + j + k
     end)
     local t22 = Tensor{{{3, 4, 5}, {4, 5, 6}, {5, 6, 7}}, {{4, 5, 6}, {5, 6, 7}, {6, 7, 8}}, {{5, 6, 7}, {6, 7, 8}, {7, 8, 9}}}
-    self:assertEquals(t21, t22)
     self:assertEqualsTable(t21, t22)
 end
 
@@ -455,6 +459,8 @@ function testTensor:testSetReindex(...)
 
     self:assertEqualsTable(v2:setReindex(2, 1), Tensor{2, 2, 3})
     self:assertEqualsTable(v2:setReindex(2, {1}), Tensor{2, 2, 3})
+    self:assertEqualsTable(v2:setReindex({2}, {1}), Tensor{{2}, 2, 3})
+    self:assertEqualsTable(v2:setReindex({}, {1}), Tensor{{}, 2, 3})
 
     local t = Tensor {
         {1, 2, 3},
@@ -760,6 +766,7 @@ function testTensor:testSetReindex(...)
             {7, 8, 9}
         }
     })
+
     self:assertEqualsTable(t2:setReindex(2, {2, 1, 1}), {
         {
             {1, 2, 3},

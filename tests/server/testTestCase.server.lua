@@ -168,6 +168,8 @@ end
 function testTestCase:testAssertNotEqualsTable()
     self:assertNotEqualsTable(1, 2)
 
+    self:assertNotEqualsTable({}, {1})
+
     self:assertNotEqualsTable({1}, {2})
     self:assertNotEqualsTable({1, 2}, {1, 3})
 
