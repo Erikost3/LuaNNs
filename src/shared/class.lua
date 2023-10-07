@@ -23,7 +23,7 @@ end
 
 local function subclass(class, _subclass)
     
-    _subclass.__index = _subclass
+    _subclass.__index = _subclass or {}
     _subclass.__call = construct
 
     return setmetatable(_subclass, class)
