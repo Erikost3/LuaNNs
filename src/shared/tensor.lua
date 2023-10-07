@@ -110,9 +110,6 @@ function Tensor:init(...)
 
     local newSelf
     local function recursiveConstruct(pastIndicies)
-        
-
-
         for i = 1, shape[pastIndicies and #pastIndicies > 0 and #pastIndicies+1 or 1] do
             local indicies = pastIndicies and table.clone(pastIndicies) or {}
             indicies[#indicies+1] = i
