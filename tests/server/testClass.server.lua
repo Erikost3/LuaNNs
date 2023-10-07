@@ -26,6 +26,12 @@ SubClass.test = "test2"
 
 instance = SubClass()
 
+-- Make sure instance is a BaseClass instance
+assert(
+    instance:is(BaseClass), 
+    "Class: instance is not a BaseClass instance"
+)
+
 -- Make sure the initializer works
 assert(
     instance.test == "test2",
